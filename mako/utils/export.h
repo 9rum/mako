@@ -14,6 +14,24 @@
 
 #pragma once
 
+// From C10's macro definition:
+//
+// Definition of an adaptive XX_API macro, that depends on whether you are
+// building the library itself or not, routes to XX_EXPORT and XX_IMPORT.
+// Basically, you will need to do this for each shared library that you are
+// building, and the instruction is as follows: assuming that you are building
+// a library called libawesome.so. You should:
+// (1) for your cmake target (usually done by "add_library(awesome, ...)"),
+//     define a macro called AWESOME_BUILD_MAIN_LIB using
+//     target_compile_options.
+// (2) define the AWESOME_API macro similar to the one below.
+// And in the source file of your awesome library, use AWESOME_API to
+// annotate public symbols.
+//
+// Since Mako is designed to be a serving system, this means that it always
+// builds an executable file; in other words, since MAKO_BUILD_MAIN_LIB will
+// always be defined (if any), here we will not define complicated macros, but
+// only a compiler-adaptive macro for public symbol annotation purpose.
 #ifdef __GNUC__
 #define MAKO_API __attribute__((__visibility__("default")))
 #else
