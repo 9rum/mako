@@ -49,7 +49,7 @@ auto _default_cache_path    = fs::path(_hf_home) / fs::path("hub");
 auto default_cache_path     = _default_cache_path.string();
 auto _huggingface_hub_cache = _getenv("HUGGINGFACE_HUB_CACHE", default_cache_path);
 auto _hf_hub_cache          = _getenv("HF_HUB_CACHE", _huggingface_hub_cache);
-auto _default_revision      = "main";
+auto _default_revision      = std::string("main");
 
 #define HF_HOME               _hf_home
 #define HUGGINGFACE_HUB_CACHE _huggingface_hub_cache
