@@ -99,7 +99,7 @@ std::tuple<std::string, std::vector<std::string>, bool> prepare_hf_model_weights
             "optimizer.pt",
             "scheduler.pt",
             "scaler.pt"
-    	}; // blacklisted function fusioned
+    	};
 	bool blacklisted = (std::find(blacklist.begin(), blacklist.end(), fs::path(input).filename()) == blacklist.end());
         hf_weights_files.erase(std::remove_if(hf_weights_files.begin(), hf_weights_files.end(), blacklisted),
                 hf_weights_files.end());
