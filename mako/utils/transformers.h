@@ -14,12 +14,13 @@
 
 #pragma once
 
+#include <pwd.h>
+#include <unistd.h>
+
 #include <filesystem>
 #include <optional>
-#include <pwd.h>
 #include <string>
 #include <tuple>
-#include <unistd.h>
 #include <vector>
 
 #include <torch/torch.h>
@@ -33,7 +34,7 @@ namespace fs = std::filesystem;
 /// \param __default Default value returned if ``__key`` does not exist.
 /// \return Value of the environment variable ``__key``.
 inline std::string _getenv(const char *__key, std::string __default) {
-  const char *value = std::getenv(__key);
+  auto value = std::getenv(__key);
   return value ? std::string(value) : __default;
 }
 
