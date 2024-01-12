@@ -26,36 +26,25 @@
 
 namespace fs = std::filesystem;
 
-bool blacklisted(std::string input) {
-    std::vector<std::string> blacklist = {
-        "training_args.bin",
-        "optimizer.bin",
-        "optimizer.pt",
-        "scheduler.pt",
-        "scaler.pt"
-    };
-    if (std::find(blacklist.begin(), blacklist.end(), input) == blacklist.end())
-        return false;
-    else
-        return true;
-}
-
+/// \brief Utility to find weight files from model directory
+/// \param model_name_or_path A path to a directory containing model weights saved using
+/// \param
+/// \param
+/// \param
+/// \param
+/// \return
 std::tuple<std::string, std::vector<std::string>, bool> prepare_hf_model_weights (
         std::string model_name_or_path,
         std::string cache_dir = ,
         std::string load_format = "auto",
         bool fall_back_to_pt = true,
         std::string revision = "None") {
-    /*get weight files from model
-     *load weight files and retrun ...
-    */
     // check if model path exists
     auto is_local = fs::exists(fs::path(model_name_or_path));
 
     // setting file patterns to load weights
     bool use_safetensors = false;
     std::vector<std::string> allow_patterns;
-    // TODO : specify throw in function signature
     try {
         std::vector<std::string> format_allowance = {"auto", "safetensors", "pt", "npcache"};
         if (std::find(format_allowance.begin(), format_allowance.end(), load_format) == format_allowance.end())
@@ -104,7 +93,14 @@ std::tuple<std::string, std::vector<std::string>, bool> prepare_hf_model_weights
     }
     // exclude file
     if (!use_safetensors) {
-        // TODO: use erase method
+	std::vector<std::string> blacklist = {
+            "training_args.bin",
+            "optimizer.bin",
+            "optimizer.pt",
+            "scheduler.pt",
+            "scaler.pt"
+    	}; // blacklisted function fusioned
+	bool blacklisted = (std::find(blacklist.begin(), blacklist.end(), fs::path(input).filename()) == blacklist.end());
         hf_weights_files.erase(std::remove_if(hf_weights_files.begin(), hf_weights_files.end(), blacklisted),
                 hf_weights_files.end());
     }
@@ -115,16 +111,4 @@ std::tuple<std::string, std::vector<std::string>, bool> prepare_hf_model_weights
     }
 
     return std::tuple(hf_folder, hf_weights_files, use_safetensors);
-}
-
-// simple test
-int main() {
-    std::string model_path="/NAS4/base_models/meta-llama/Llama-2-7b-hf";
-    std::string cache_dir=".tmp";
-    std::string load_format="auto";
-    bool fall_back_to_pt=true;
-    std::string revision="latest";
-
-    prepare_hf_model_weights(model_path, cache_dir);
-    return 0;
 }
