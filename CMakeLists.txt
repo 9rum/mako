@@ -25,7 +25,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED  ON)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 
 # If PyTorch was installed via conda or pip, CMAKE_PREFIX_PATH
-# can be queried using torch.utils.cmake_prefix_path variable.
+# can be queried using torch.utils.cmake_prefix_path.
 # Find LibTorch from virtual environment to avoid tedious setup.
 execute_process(COMMAND python3 -c "import torch; print(torch.utils.cmake_prefix_path)"
   OUTPUT_VARIABLE TORCH_CMAKE_PREFIX_PATH

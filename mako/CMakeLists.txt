@@ -13,6 +13,7 @@
 # limitations under the License.
 
 add_subdirectory(nn)
+add_subdirectory(utils)
 
 add_executable(${CMAKE_PROJECT_NAME} main.cc)
 target_include_directories(
@@ -23,4 +24,5 @@ target_include_directories(
 target_link_libraries(
   ${CMAKE_PROJECT_NAME}
   ${TORCH_LIBRARIES}
-  mako::nn)
+  mako::nn
+  mako::utils)
