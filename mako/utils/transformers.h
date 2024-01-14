@@ -33,7 +33,7 @@ namespace fs = std::filesystem;
 /// \param __key The name of environment variable.
 /// \param __default Default value returned if ``__key`` does not exist.
 /// \return Value of the environment variable ``__key``.
-inline std::string _getenv(const char *__key, std::string __default) {
+inline std::string _getenv(const char *__key, const std::string &__default) {
   auto value = std::getenv(__key);
   return value ? std::string(value) : __default;
 }
