@@ -31,7 +31,7 @@ static inline std::tuple<std::string, std::vector<std::string>, bool> prepare_hf
   std::string load_format              = "auto",
   bool fall_back_to_pt                 = true,
   std::optional<std::string> revision  = std::nullopt) {
-  auto is_local = fs::is_directory(fs::path(model_name_or_path));
+  auto is_local        = fs::is_directory(fs::path(model_name_or_path));
   auto use_safetensors = false;
 
   // Some quantized models use .pt files for storing the weights.
@@ -40,7 +40,7 @@ static inline std::tuple<std::string, std::vector<std::string>, bool> prepare_hf
     allow_patterns = {".safetensors", ".bin"};
   } else if (load_format.compare("safetensors") == 0) {
     use_safetensors = true;
-    allow_patterns = {".safetensors", ".bin"};
+    allow_patterns  = {".safetensors", ".bin"};
   } else if (load_format.compare("pt") == 0) {
     allow_patterns = {".pt"};
   } else if (load_format.compare("npcache") == 0) {
@@ -90,13 +90,13 @@ static inline std::tuple<std::string, std::vector<std::string>, bool> prepare_hf
       hf_weights_files.begin(),
       hf_weights_files.end(),
       [&](const std::string &entry){
-        for (const std::string &suffix: blacklist) {
+        for (const auto &suffix: blacklist) {
           if (suffix.size() <= entry.size() && entry.compare(entry.size()-suffix.size(), suffix.size(), suffix) == 0) {
             return true;
           }
         }
         return false;
-      }));
+      }), hf_weights_files.end());
   }
 
   if (hf_weights_files.empty()) {
