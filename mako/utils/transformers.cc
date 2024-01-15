@@ -82,7 +82,7 @@ static std::tuple<std::string, std::vector<std::string>, bool> prepare_hf_model_
             break;
         }
     }
-    // exclude files which it not used for loading weigths
+    // exclude files which is not used for loading weigths
     // https://github.com/huggingface/transformers/blob/v4.34.0/src/transformers/trainer.py#L227-L233
     if (!use_safetensors) {
 	std::vector<std::string> blacklist = {
@@ -92,11 +92,9 @@ static std::tuple<std::string, std::vector<std::string>, bool> prepare_hf_model_
             "scheduler.pt",
             "scaler.pt"
     	};
-	for (auto const &entry : hf_weight_files) {
-	    bool blacklisted = (std::find(blacklist.begin(), blacklist.end(), fs::path(entry).filename()) != blacklist.end());
-            hf_weights_files.erase(std::remove_if(hf_weights_files.begin(), hf_weights_files.end(), blacklisted),
+	bool blacklisted = (std::find(blacklist.begin(), blacklist.end(), fs::path(entry).filename()) != blacklist.end());
+        hf_weights_files.erase(std::remove_if(hf_weights_files.begin(), hf_weights_files.end(), blacklisted),
                 hf_weights_files.end());
-	}
     }
 
     // throw exception if model weights not exist
