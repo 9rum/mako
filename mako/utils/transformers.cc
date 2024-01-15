@@ -16,51 +16,50 @@
 
 #include "mako/utils/transformers.h"
 
-#include <vector>
-#include <iostream>
-#include <fstream>
-#include <tuple>
-#include <string>
 #include <filesystem>
 #include <algorithm>
+#include <optional>
+#include <vector>
+#include <string>
+#include <tuple>
 
 namespace fs = std::filesystem;
 
 /// \brief Utility to find weight files from model directory
 /// \param model_name_or_path A path to a directory containing model weights saved using
-/// \param
-/// \param
-/// \param
-/// \param
-/// \return
-std::tuple<std::string, std::vector<std::string>, bool> prepare_hf_model_weights (
+/// \param cache_dir Path to the folder where cached files are stored.
+/// \param load_format Format of the model to load. Must be one of ``"auto"``, ``"safetensors"``, ``"pt"``, or ``"npcache"``.
+/// \param fall_back_to_pt If ``true``, will always allow pt format.
+/// \param revision An optional Git revision id which can be a branch name, a tag, or a commit hash.
+/// \return Pairs of name and weight of the loaded model.
+static std::tuple<std::string, std::vector<std::string>, bool> prepare_hf_model_weights(
         std::string model_name_or_path,
-        std::string cache_dir = ,
-        std::string load_format = "auto",
-        bool fall_back_to_pt = true,
-        std::string revision = "None") {
+	std::optional<std::string> cache_dir = std::nullopt,
+        std::string load_format              = "auto",
+        bool fall_back_to_pt                 = true,
+        std::optional<std::string> revision  = "None") {
     // check if model path exists
     auto is_local = fs::exists(fs::path(model_name_or_path));
 
-    // setting file patterns to load weights
+    // setting before loading weights based on load_format argument
     bool use_safetensors = false;
     std::vector<std::string> allow_patterns;
     try {
         std::vector<std::string> format_allowance = {"auto", "safetensors", "pt", "npcache"};
         if (std::find(format_allowance.begin(), format_allowance.end(), load_format) == format_allowance.end())
-            throw std::invalid_argument("invalid load_format, it should be one of : auto, safetensors, pt, npcache");
+            throw std::invalid_argument("invalid load_format, must be one of : auto, safetensors, pt, npcache");
     } catch(std::invalid_argument &e) {
         std::cerr << e.what();
     }
 
-    if (load_format == "auto") {
+    if (load_format.compare("auto")) {
         allow_patterns = {".safetensors", ".bin"};
-    } else if (load_format == "safetensors") {
+    } else if (load_format.compare("safetensors")) {
         use_safetensors == true;
         allow_patterns = {".safetensors", ".bin"};
-    } else if (load_format == "pt") {
+    } else if (load_format.compare("pt")) {
         allow_patterns = {".pt"};
-    } else if (load_format == "npcache") {
+    } else if (load_format.compare("npcache")) {
         allow_patterns = {".bin"};
     }
 
@@ -70,7 +69,7 @@ std::tuple<std::string, std::vector<std::string>, bool> prepare_hf_model_weights
 
     std::string hf_folder;
     if (!is_local) {
-        // TODO(soomin): implemen snapshot_download
+        // TODO(soomin): implement snapshot_download
     } else {
         hf_folder = model_name_or_path;
     }
@@ -78,20 +77,20 @@ std::tuple<std::string, std::vector<std::string>, bool> prepare_hf_model_weights
     // load weight files path from model path directory
     std::vector<std::string> hf_weights_files = {};
     for (auto const &pattern : allow_patterns) {
-        for (auto const& entry : fs::directory_iterator(hf_folder)) {
-            if (entry.path().extension() == pattern) {
+        for (auto const &entry : fs::directory_iterator(hf_folder)) {
+            if (entry.path().extension().compare(pattern)) {
                 hf_weights_files.push_back(entry.path().string());
             }
         }
-
         if (!hf_weights_files.empty()) {
-            if (pattern == ".safetensors") {
+            if (pattern.compare(".safetensors")) {
                 use_safetensors = true;
             }
             break;
         }
     }
-    // exclude file
+    // exclude files which it not used for loading weigths
+    // https://github.com/huggingface/transformers/blob/v4.34.0/src/transformers/trainer.py#L227-L233
     if (!use_safetensors) {
 	std::vector<std::string> blacklist = {
             "training_args.bin",
@@ -100,9 +99,11 @@ std::tuple<std::string, std::vector<std::string>, bool> prepare_hf_model_weights
             "scheduler.pt",
             "scaler.pt"
     	};
-	bool blacklisted = (std::find(blacklist.begin(), blacklist.end(), fs::path(input).filename()) == blacklist.end());
-        hf_weights_files.erase(std::remove_if(hf_weights_files.begin(), hf_weights_files.end(), blacklisted),
+	for (auto const &entry : hf_weight_files) {
+	    bool blacklisted = (std::find(blacklist.begin(), blacklist.end(), fs::path(entry).filename()) != blacklist.end());
+            hf_weights_files.erase(std::remove_if(hf_weights_files.begin(), hf_weights_files.end(), blacklisted),
                 hf_weights_files.end());
+	}
     }
 
     // throw exception if model weights not exist
