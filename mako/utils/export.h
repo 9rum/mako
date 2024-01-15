@@ -28,7 +28,7 @@
 // And in the source file of your awesome library, use AWESOME_API to
 // annotate public symbols.
 //
-// Since Mako is designed to be a serving system, it always builds an
+// Since Mako is designed to be a serving system, it always produces an
 // executable file; in other words, MAKO_BUILD_MAIN_LIB will always be defined
 // (if any), thus here we will not define complicated macros but only a
 // compiler-adaptive macro for public symbol annotation purpose.
