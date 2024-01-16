@@ -17,6 +17,7 @@
 #include "mako/utils/transformers.h"
 
 #include <algorithm>
+#include <fstream>
 
 /// \brief Utility to find weight files from model directory.
 /// \param model_name_or_path A path to a directory containing model weights saved using ``save_pretrained``.
@@ -104,4 +105,40 @@ static inline std::tuple<std::string, std::vector<std::string>, bool> prepare_hf
   }
 
   return std::tuple(hf_folder, hf_weights_files, use_safetensors);
+}
+
+std::vector<std::tuple<std::string, torch::Tensor>> mako::utils::hf_model_weights(
+  std::string model_name_or_path,
+  std::optional<std::string> cache_dir = std::nullopt,
+  std::string load_format              = "auto",
+  bool fall_back_to_pt                 = true,
+  std::optional<std::string> revision  = std::nullopt) {
+  auto [hf_folder, hf_weights_files, use_safetensors] = prepare_hf_model_weights(
+    model_name_or_path,
+    cache_dir,
+    load_format,
+    fall_back_to_pt,
+    revision);
+
+  if (load_format.compare("npcache") == 0) {
+    throw std::logic_error(std::string("npcache is currently not supported"));
+  }
+
+  if (use_safetensors) {
+    throw std::logic_error(std::string("safetensors is currently not supported"));
+  }
+
+  std::vector<std::tuple<std::string, torch::Tensor>> weights;
+
+  for (const auto &file : hf_weights_files) {
+    auto stream = std::ifstream(file, std::ios::binary);
+    auto buf    = std::vector<char>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
+    stream.close();
+    auto state = torch::pickle_load(buf).toGenericDict();
+    for (const auto &weight : state) {
+      weights.push_back(std::tuple(weight.key().toStringRef(), weight.value().toTensor()));
+    }
+  }
+
+  return weights;
 }
