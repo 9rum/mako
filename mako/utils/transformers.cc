@@ -1,6 +1,6 @@
 // Adapted from https://github.com/vllm-project/vllm/blob/v0.2.7/vllm/model_executor/weight_utils.py
 // Copyright 2024 The Mako Authors
-// Copyright 2023 The vLLM Team
+// Copyright 2023 The vLLM team
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ static inline std::tuple<std::string, std::vector<std::string>, bool> prepare_hf
   } else if (load_format.compare("npcache") == 0) {
     allow_patterns = {".bin"};
   } else {
-    throw std::invalid_argument(std::string("Unknown load_format: ").append(load_format));
+    throw std::invalid_argument(std::string("Unknown load format: ").append(load_format));
   }
 
   if (fall_back_to_pt) {
@@ -100,7 +100,7 @@ static inline std::tuple<std::string, std::vector<std::string>, bool> prepare_hf
   }
 
   if (hf_weights_files.empty()) {
-    throw std::invalid_argument(std::string("Cannot find any model weights with ").append(model_name_or_path));
+    throw std::runtime_error(std::string("Cannot find any model weights with ").append(model_name_or_path));
   }
 
   return std::tuple(hf_folder, hf_weights_files, use_safetensors);
