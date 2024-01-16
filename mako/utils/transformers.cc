@@ -16,8 +16,25 @@
 
 #include "mako/utils/transformers.h"
 
+#include <pwd.h>
+#include <unistd.h>
+
 #include <algorithm>
+#include <filesystem>
 #include <fstream>
+
+namespace fs = std::filesystem;
+
+const auto _default_home                 = fs::path(getpwuid(getuid())->pw_dir) / fs::path(".cache");
+const auto default_home                  = _default_home.string();
+const auto _xdg_cache_home               = _getenv("XDG_CACHE_HOME", default_home);
+const auto __hf_home                     = fs::path(_xdg_cache_home) / fs::path("huggingface");
+const std::string _hf_home               = _getenv("HF_HOME", __hf_home.string());
+const auto _default_cache_path           = fs::path(_hf_home) / fs::path("hub");
+const auto default_cache_path            = _default_cache_path.string();
+const std::string _huggingface_hub_cache = _getenv("HUGGINGFACE_HUB_CACHE", default_cache_path);
+const std::string _hf_hub_cache          = _getenv("HF_HUB_CACHE", _huggingface_hub_cache);
+const std::string _default_revision      = std::string("main");
 
 /// \brief Utility to find weight files from model directory.
 /// \param model_name_or_path A path to a directory containing model weights saved using ``save_pretrained``.
@@ -109,10 +126,10 @@ static inline std::tuple<std::string, std::vector<std::string>, bool> prepare_hf
 
 std::vector<std::tuple<std::string, torch::Tensor>> mako::utils::hf_model_weights(
   std::string model_name_or_path,
-  std::optional<std::string> cache_dir = std::nullopt,
-  std::string load_format              = "auto",
-  bool fall_back_to_pt                 = true,
-  std::optional<std::string> revision  = std::nullopt) {
+  std::optional<std::string> cache_dir,
+  std::string load_format,
+  bool fall_back_to_pt,
+  std::optional<std::string> revision) {
   auto [hf_folder, hf_weights_files, use_safetensors] = prepare_hf_model_weights(
     model_name_or_path,
     cache_dir,

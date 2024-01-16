@@ -14,10 +14,6 @@
 
 #pragma once
 
-#include <pwd.h>
-#include <unistd.h>
-
-#include <filesystem>
 #include <optional>
 #include <string>
 #include <tuple>
@@ -26,8 +22,6 @@
 #include <torch/torch.h>
 
 #include "mako/utils/export.h"
-
-namespace fs = std::filesystem;
 
 /// \brief Alternative to ``std::getenv``, equivalent to Python's ``os.getenv``.
 /// \param __key The name of environment variable.
@@ -41,16 +35,10 @@ inline std::string _getenv(const char *__key, const std::string &__default) {
 // Definitions of constants and macros to interact with Hugging Face Hub.
 // Most of the below constants/macros are adapted from
 // https://github.com/huggingface/huggingface_hub/blob/v0.20.0/src/huggingface_hub/constants.py.
-auto _default_home          = fs::path(getpwuid(getuid())->pw_dir) / fs::path(".cache");
-auto default_home           = _default_home.string();
-auto _xdg_cache_home        = _getenv("XDG_CACHE_HOME", default_home);
-auto __hf_home              = fs::path(_xdg_cache_home) / fs::path("huggingface");
-auto _hf_home               = _getenv("HF_HOME", __hf_home.string());
-auto _default_cache_path    = fs::path(_hf_home) / fs::path("hub");
-auto default_cache_path     = _default_cache_path.string();
-auto _huggingface_hub_cache = _getenv("HUGGINGFACE_HUB_CACHE", default_cache_path);
-auto _hf_hub_cache          = _getenv("HF_HUB_CACHE", _huggingface_hub_cache);
-auto _default_revision      = std::string("main");
+extern const std::string _hf_home;
+extern const std::string _huggingface_hub_cache;
+extern const std::string _hf_hub_cache;
+extern const std::string _default_revision;
 
 #define HF_HOME               _hf_home
 #define HUGGINGFACE_HUB_CACHE _huggingface_hub_cache
