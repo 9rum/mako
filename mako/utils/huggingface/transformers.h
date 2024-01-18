@@ -27,15 +27,14 @@ namespace mako {
 namespace utils {
 inline namespace huggingface {
 /// \brief Utility to download and initialize Hugging Face Transformers model.
-/// \param yield A coroutine to generate values.
 /// \param model_name_or_path A path to a directory containing model weights saved using ``save_pretrained``.
 /// \param cache_dir Path to the folder where cached files are stored.
 /// \param load_format Format of the model to load.
 ///  Must be one of ``"auto"``, ``"safetensors"``, ``"pt"``, or ``"npcache"``.
 /// \param fall_back_to_pt If ``true``, will always allow pt format.
 /// \param revision An optional Git revision id which can be a branch name, a tag, or a commit hash.
-void MAKO_API weight_iterator(
-  boost::coroutines2::coroutine<std::tuple<absl::string_view, torch::Tensor>>::push_type &yield,
+/// \return An iterator generating the pairs of name and weight of the loaded model.
+boost::coroutines2::coroutine<std::tuple<absl::string_view, torch::Tensor>>::pull_type MAKO_API weight_iterator(
   absl::string_view model_name_or_path,
   std::optional<absl::string_view> cache_dir = std::nullopt,
   absl::string_view load_format              = "auto",
