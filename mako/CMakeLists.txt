@@ -24,5 +24,8 @@ target_include_directories(
 target_link_libraries(
   ${CMAKE_PROJECT_NAME}
   ${TORCH_LIBRARIES}
+  absl::log
+  absl::strings
+  ${Boost_CONTEXT_LIBRARY}
   mako::nn
   mako::utils)

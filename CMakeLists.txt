@@ -18,8 +18,8 @@ cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 project(mako LANGUAGES C CXX CUDA)
 
 set(CMAKE_C_STANDARD    11 CACHE STRING "The C standard whose features are requested to build this target.")
-set(CMAKE_CXX_STANDARD  20 CACHE STRING "The C++ standard whose features are requested to build this target.")
-set(CMAKE_CUDA_STANDARD 20 CACHE STRING "The CUDA standard whose features are requested to build this target.")
+set(CMAKE_CXX_STANDARD  17 CACHE STRING "The C++ standard whose features are requested to build this target.")
+set(CMAKE_CUDA_STANDARD 17 CACHE STRING "The CUDA standard whose features are requested to build this target.")
 set(CMAKE_C_STANDARD_REQUIRED    ON)
 set(CMAKE_CXX_STANDARD_REQUIRED  ON)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
@@ -37,5 +37,14 @@ find_package(Torch REQUIRED)
 string(APPEND CMAKE_C_FLAGS    " ${TORCH_C_FLAGS}")
 string(APPEND CMAKE_CXX_FLAGS  " ${TORCH_CXX_FLAGS}")
 string(APPEND CMAKE_CUDA_FLAGS " ${TORCH_CUDA_FLAGS}")
+
+set(ABSL_PROPAGATE_CXX_STD ON)
+add_subdirectory(abseil)
+
+find_package(
+  Boost
+  1.74.0
+  REQUIRED
+  COMPONENTS context)
 
 add_subdirectory(mako)
