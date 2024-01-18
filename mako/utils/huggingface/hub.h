@@ -1,0 +1,30 @@
+// Copyright 2024 The Mako Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#pragma once
+
+#include <absl/strings/string_view.h>
+
+// Definitions of constants and macros to interact with Hugging Face Hub.
+// Most of the below constants/macros are adapted from
+// https://github.com/huggingface/huggingface_hub/blob/v0.20.0/src/huggingface_hub/constants.py.
+extern absl::string_view _hf_home;
+extern absl::string_view _huggingface_hub_cache;
+extern absl::string_view _hf_hub_cache;
+extern absl::string_view _default_revision;
+
+#define HF_HOME               _hf_home
+#define HUGGINGFACE_HUB_CACHE _huggingface_hub_cache
+#define HF_HUB_CACHE          _hf_hub_cache
+#define DEFAULT_REVISION      _default_revision
