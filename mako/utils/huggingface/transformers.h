@@ -34,7 +34,7 @@ inline namespace huggingface {
 ///  Must be one of ``"auto"``, ``"safetensors"``, ``"pt"``, or ``"npcache"``.
 /// \param fall_back_to_pt If ``true``, will always allow pt format.
 /// \param revision An optional Git revision id which can be a branch name, a tag, or a commit hash.
-void MAKO_API load(
+void MAKO_API weight_iterator(
   boost::coroutines2::coroutine<std::tuple<absl::string_view, torch::Tensor>>::push_type &yield,
   absl::string_view model_name_or_path,
   std::optional<absl::string_view> cache_dir = std::nullopt,
