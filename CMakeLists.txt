@@ -18,8 +18,8 @@ cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 project(mako LANGUAGES C CXX CUDA)
 
 set(CMAKE_C_STANDARD    11 CACHE STRING "The C standard whose features are requested to build this target.")
-set(CMAKE_CXX_STANDARD  17 CACHE STRING "The C++ standard whose features are requested to build this target.")
-set(CMAKE_CUDA_STANDARD 17 CACHE STRING "The CUDA standard whose features are requested to build this target.")
+set(CMAKE_CXX_STANDARD  20 CACHE STRING "The C++ standard whose features are requested to build this target.")
+set(CMAKE_CUDA_STANDARD 20 CACHE STRING "The CUDA standard whose features are requested to build this target.")
 set(CMAKE_C_STANDARD_REQUIRED    ON)
 set(CMAKE_CXX_STANDARD_REQUIRED  ON)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
@@ -27,7 +27,8 @@ set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 # If PyTorch was installed via conda or pip, CMAKE_PREFIX_PATH
 # can be queried using torch.utils.cmake_prefix_path.
 # Find LibTorch from virtual environment to avoid tedious setup.
-execute_process(COMMAND python3 -c "import torch; print(torch.utils.cmake_prefix_path)"
+execute_process(
+  COMMAND python3 -c "import torch; print(torch.utils.cmake_prefix_path)"
   OUTPUT_VARIABLE TORCH_CMAKE_PREFIX_PATH
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 list(APPEND CMAKE_PREFIX_PATH "${TORCH_CMAKE_PREFIX_PATH}")
