@@ -27,7 +27,8 @@ set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 # If PyTorch was installed via conda or pip, CMAKE_PREFIX_PATH
 # can be queried using torch.utils.cmake_prefix_path.
 # Find LibTorch from virtual environment to avoid tedious setup.
-execute_process(COMMAND python3 -c "import torch; print(torch.utils.cmake_prefix_path)"
+execute_process(
+  COMMAND python3 -c "import torch; print(torch.utils.cmake_prefix_path)"
   OUTPUT_VARIABLE TORCH_CMAKE_PREFIX_PATH
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 list(APPEND CMAKE_PREFIX_PATH "${TORCH_CMAKE_PREFIX_PATH}")
@@ -36,5 +37,14 @@ find_package(Torch REQUIRED)
 string(APPEND CMAKE_C_FLAGS    " ${TORCH_C_FLAGS}")
 string(APPEND CMAKE_CXX_FLAGS  " ${TORCH_CXX_FLAGS}")
 string(APPEND CMAKE_CUDA_FLAGS " ${TORCH_CUDA_FLAGS}")
+
+set(ABSL_PROPAGATE_CXX_STD ON)
+add_subdirectory(abseil)
+
+find_package(
+  Boost
+  1.74.0
+  REQUIRED
+  COMPONENTS context)
 
 add_subdirectory(mako)
