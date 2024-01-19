@@ -129,13 +129,27 @@ static inline void load(
   }
 
   for (auto file : hf_weights_files) {
-    auto stream = std::ifstream(file.data(), std::ios::binary);
-    auto buf    = std::vector<char>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
-    stream.close();
-    auto weights = torch::pickle_load(buf).toGenericDict();
-    for (const auto &weight : weights) {
-      yield(std::make_tuple(weight.key().toStringRef(), weight.value().toTensor()));
+    // auto stream = std::ifstream(file.data(), std::ios::binary);
+    // auto buf    = std::vector<char>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
+    // stream.close();
+    // auto weights = torch::pickle_load(buf).toGenericDict();
+    // for (const auto &weight : weights) {
+    //   yield(std::make_tuple(weight.key().toStringRef(), weight.value().toTensor()));
+    // }
+
+    torch::nn::Module weights;
+    torch::load(weights, file);
+    for (const auto &weight : weights.named_parameters()) {
+      // yield(weight.pair());
+      yield(std::make_tuple(weight.key(), weight.value()));
     }
+
+    // auto weights = torch::jit::load(file.data());
+    // for (auto weight : weights.named_parameters()) {
+    //   auto name = weight.name;
+    //   auto param = weight.value;
+    //   yield(std::make_tuple(name, param));
+    // }
   }
 }
 
