@@ -41,6 +41,9 @@ string(APPEND CMAKE_CUDA_FLAGS " ${TORCH_CUDA_FLAGS}")
 set(ABSL_PROPAGATE_CXX_STD ON)
 add_subdirectory(abseil)
 
+add_subdirectory(googletest)
+enable_testing()
+
 find_package(
   Boost
   1.74.0
