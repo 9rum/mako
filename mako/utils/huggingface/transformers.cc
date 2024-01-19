@@ -24,57 +24,6 @@
 
 namespace fs = std::filesystem;
 
-boost::coroutines2::coroutine<std::tuple<absl::string_view, torch::Tensor>>::pull_type mako::utils::huggingface::weight_iterator(
-  absl::string_view model_name_or_path,
-  std::optional<absl::string_view> cache_dir,
-  absl::string_view load_format,
-  bool fall_back_to_pt,
-  std::optional<absl::string_view> revision) {
-  boost::coroutines2::coroutine<std::tuple<absl::string_view, torch::Tensor>>::pull_type iterator{
-    std::bind(
-      load,
-      std::placeholders::_1,
-      model_name_or_path,
-      cache_dir,
-      load_format,
-      fall_back_to_pt,
-      revision)};
-    return iterator;
-}
-
-static inline void load(
-  boost::coroutines2::coroutine<std::tuple<absl::string_view, torch::Tensor>>::push_type &yield,
-  absl::string_view model_name_or_path,
-  std::optional<absl::string_view> cache_dir,
-  absl::string_view load_format,
-  bool fall_back_to_pt,
-  std::optional<absl::string_view> revision) {
-  auto [hf_folder, hf_weights_files, use_safetensors] = prepare_load(
-    model_name_or_path,
-    cache_dir,
-    load_format,
-    fall_back_to_pt,
-    revision);
-
-  if (load_format.compare("npcache") == 0) {
-    throw std::logic_error("npcache is currently not supported");
-  }
-
-  if (use_safetensors) {
-    throw std::logic_error("safetensors is currently not supported");
-  }
-
-  for (auto file : hf_weights_files) {
-    auto stream = std::ifstream(file.data(), std::ios::binary);
-    auto buf    = std::vector<char>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
-    stream.close();
-    auto weights = torch::pickle_load(buf).toGenericDict();
-    for (const auto &weight : weights) {
-      yield(std::make_tuple(weight.key().toStringRef(), weight.value().toTensor()));
-    }
-  }
-}
-
 static inline std::tuple<absl::string_view, std::vector<absl::string_view>, bool> prepare_load(
   absl::string_view model_name_or_path,
   std::optional<absl::string_view> cache_dir,
@@ -155,4 +104,55 @@ static inline std::tuple<absl::string_view, std::vector<absl::string_view>, bool
   }
 
   return std::make_tuple(hf_folder, hf_weights_files, use_safetensors);
+}
+
+static inline void load(
+  boost::coroutines2::coroutine<std::tuple<absl::string_view, torch::Tensor>>::push_type &yield,
+  absl::string_view model_name_or_path,
+  std::optional<absl::string_view> cache_dir,
+  absl::string_view load_format,
+  bool fall_back_to_pt,
+  std::optional<absl::string_view> revision) {
+  auto [hf_folder, hf_weights_files, use_safetensors] = prepare_load(
+    model_name_or_path,
+    cache_dir,
+    load_format,
+    fall_back_to_pt,
+    revision);
+
+  if (load_format.compare("npcache") == 0) {
+    throw std::logic_error("npcache is currently not supported");
+  }
+
+  if (use_safetensors) {
+    throw std::logic_error("safetensors is currently not supported");
+  }
+
+  for (auto file : hf_weights_files) {
+    auto stream = std::ifstream(file.data(), std::ios::binary);
+    auto buf    = std::vector<char>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
+    stream.close();
+    auto weights = torch::pickle_load(buf).toGenericDict();
+    for (const auto &weight : weights) {
+      yield(std::make_tuple(weight.key().toStringRef(), weight.value().toTensor()));
+    }
+  }
+}
+
+boost::coroutines2::coroutine<std::tuple<absl::string_view, torch::Tensor>>::pull_type mako::utils::huggingface::weight_iterator(
+  absl::string_view model_name_or_path,
+  std::optional<absl::string_view> cache_dir,
+  absl::string_view load_format,
+  bool fall_back_to_pt,
+  std::optional<absl::string_view> revision) {
+  boost::coroutines2::coroutine<std::tuple<absl::string_view, torch::Tensor>>::pull_type iterator{
+    std::bind(
+      load,
+      std::placeholders::_1,
+      model_name_or_path,
+      cache_dir,
+      load_format,
+      fall_back_to_pt,
+      revision)};
+    return iterator;
 }
