@@ -25,7 +25,7 @@
 
 namespace fs = std::filesystem;
 
-static inline std::tuple<absl::string_view, std::vector<absl::string_view>, bool> prepare_load(
+static inline std::tuple<absl::string_view, std::vector<std::string>, bool> prepare_load(
   absl::string_view model_name_or_path,
   std::optional<absl::string_view> cache_dir,
   absl::string_view load_format,
@@ -62,7 +62,15 @@ static inline std::tuple<absl::string_view, std::vector<absl::string_view>, bool
     hf_folder = model_name_or_path;
   }
 
-  std::vector<absl::string_view> hf_weights_files;
+  // If a weight file is stored as a string_view, it outlives the actual string value.
+  // To avoid lifetime issue, use string as an exception only for weight files.
+  //
+  // NOTE:
+  //
+  // Due to lifetime issues, a string_view is usually a poor choice for a return value
+  // and almost always a poor choice for a data member.
+  // See https://abseil.io/docs/cpp/guides/strings.
+  std::vector<std::string> hf_weights_files;
   for (auto pattern : allow_patterns) {
     for (const auto &entry : fs::directory_iterator(hf_folder)) {
       if (entry.path().extension().compare(pattern) == 0) {
@@ -104,6 +112,11 @@ static inline std::tuple<absl::string_view, std::vector<absl::string_view>, bool
     throw std::runtime_error(absl::StrFormat("Cannot find any model weights with %s", model_name_or_path));
   }
 
+  // The iteration order of directory_iterator is unspecified.
+  // See https://en.cppreference.com/w/cpp/filesystem/directory_iterator.
+  // To ensure alphabetical iteration order, sort the received entry list.
+  std::sort(hf_weights_files.begin(), hf_weights_files.end());
+
   return std::make_tuple(hf_folder, hf_weights_files, use_safetensors);
 }
 
@@ -127,8 +140,8 @@ static inline void load(
     throw std::logic_error("safetensors is currently not supported");
   } else {
     std::vector<char> data;
-    for (auto file : hf_weights_files) {
-      auto stream = std::ifstream(file.data(), std::ios::binary);
+    for (const auto &file : hf_weights_files) {
+      auto stream = std::ifstream(file, std::ios::binary);
       auto buf    = std::vector<char>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
       stream.close();
       data.insert(data.end(), std::make_move_iterator(buf.begin()), std::make_move_iterator(buf.end()));
