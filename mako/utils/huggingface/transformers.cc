@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
+#include <iterator>
 
 #include <absl/strings/str_format.h>
 
@@ -125,14 +126,16 @@ static inline void load(
   } else if (use_safetensors) {
     throw std::logic_error("safetensors is currently not supported");
   } else {
+    std::vector<char> data;
     for (auto file : hf_weights_files) {
       auto stream = std::ifstream(file.data(), std::ios::binary);
       auto buf    = std::vector<char>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
       stream.close();
-      auto weights = torch::pickle_load(buf).toGenericDict();
-      for (const auto &weight : weights) {
-        yield(std::make_pair(weight.key().toStringRef(), weight.value().toTensor()));
-      }
+      data.insert(data.end(), std::make_move_iterator(buf.begin()), std::make_move_iterator(buf.end()));
+    }
+    auto weights = torch::pickle_load(data).toGenericDict();
+    for (const auto &weight : weights) {
+      yield(std::make_pair(weight.key().toStringRef(), weight.value().toTensor()));
     }
   }
 }
