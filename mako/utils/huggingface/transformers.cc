@@ -63,7 +63,7 @@ static inline std::tuple<absl::string_view, std::vector<absl::string_view>, bool
   }
 
   std::vector<absl::string_view> hf_weights_files;
-  for (const auto &pattern : allow_patterns) {
+  for (auto pattern : allow_patterns) {
     for (const auto &entry : fs::directory_iterator(hf_folder)) {
       if (entry.path().extension().compare(pattern) == 0) {
         hf_weights_files.push_back(entry.path().string());
