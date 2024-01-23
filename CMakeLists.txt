@@ -47,9 +47,6 @@ find_package(
   REQUIRED
   COMPONENTS context)
 
-option(MAKO_BUILD_TESTING
-    "If ON, Mako will build all of Mako's own tests." OFF)
-
 include CTest
 if(BUILD_TESTING)
   include(GoogleTest)
