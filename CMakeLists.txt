@@ -50,8 +50,8 @@ find_package(
 option(MAKO_BUILD_TESTING
     "If ON, Mako will build all of Mako's own tests." OFF)
 
-if(${MAKO_BUILD_TESTING})
-  include(CTest)
+include CTest
+if(BUILD_TESTING)
   include(GoogleTest)
   add_subdirectory(googletest)
 endif()
