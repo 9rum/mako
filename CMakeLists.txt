@@ -47,7 +47,7 @@ find_package(
   REQUIRED
   COMPONENTS context)
 
-include CTest
+include(CTest)
 if(BUILD_TESTING)
   include(GoogleTest)
   add_subdirectory(googletest)
