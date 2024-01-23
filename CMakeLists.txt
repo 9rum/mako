@@ -41,13 +41,19 @@ string(APPEND CMAKE_CUDA_FLAGS " ${TORCH_CUDA_FLAGS}")
 set(ABSL_PROPAGATE_CXX_STD ON)
 add_subdirectory(abseil)
 
-add_subdirectory(googletest)
-enable_testing()
-
 find_package(
   Boost
   1.74.0
   REQUIRED
   COMPONENTS context)
+
+option(MAKO_BUILD_TESTING
+    "If ON, Mako will build all of Mako's own tests." OFF)
+
+if(${MAKO_BUILD_TESTING})
+  include(CTest)
+  include(GoogleTest)
+  add_subdirectory(googletest)
+endif()
 
 add_subdirectory(mako)

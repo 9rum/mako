@@ -28,5 +28,4 @@ target_link_libraries(
   absl::strings
   ${Boost_CONTEXT_LIBRARY}
   mako::nn
-  mako::utils
-  gtest)
+  mako::utils)
