@@ -47,4 +47,10 @@ find_package(
   REQUIRED
   COMPONENTS context)
 
+include(CTest)
+if(BUILD_TESTING)
+  include(GoogleTest)
+  add_subdirectory(googletest)
+endif()
+
 add_subdirectory(mako)
