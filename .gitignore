@@ -1,0 +1,55 @@
+# Adapted from https://github.com/github/gitignore
+# Prerequisites
+*.d
+
+# Object files
+*.lo
+*.o
+*.obj
+*.slo
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.a
+*.la
+*.lai
+*.lib
+*.so
+*.dll
+*.dylib
+
+# Executables
+*.app
+*.exe
+*.hex
+*.i*86
+*.out
+*.x86_64
+
+# Debug files
+*.dSYM/
+*.idb
+*.pdb
+*.su
+
+# Adapted from https://github.com/github/gitignore/blob/main/CUDA.gitignore
+*.cubin
+*.fatbin
+*.gpu
+*.i
+*.ii
+*.ptx
+
+# CMake build directory
+build/
+
+# Environments
+.env/
+.venv/
+env/
+env.bak/
+venv/
+venv.bak/
