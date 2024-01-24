@@ -26,7 +26,7 @@
 
 namespace fs = std::filesystem;
 
-static inline std::tuple<absl::string_view, std::vector<std::string>, bool> prepare_state_dict(
+static inline std::tuple<std::string, std::vector<std::string>, bool> prepare_state_dict(
   absl::string_view model_name_or_path,
   std::optional<absl::string_view> cache_dir,
   absl::string_view load_format,
@@ -54,7 +54,7 @@ static inline std::tuple<absl::string_view, std::vector<std::string>, bool> prep
     allow_patterns.push_back(".pt");
   }
 
-  absl::string_view hf_folder;
+  std::string hf_folder;
   if (!is_local) {
     // Download model weights from Hugging Face Hub.
     // TODO(soomin): implement ``snapshot_download``
@@ -64,7 +64,7 @@ static inline std::tuple<absl::string_view, std::vector<std::string>, bool> prep
   }
 
   // If a weight file is stored as a string_view, it outlives the actual string value.
-  // To avoid lifetime issue, use string as an exception only for weight files.
+  // To avoid lifetime issue, use string as an exception for weight files.
   //
   // NOTE:
   //
