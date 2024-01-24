@@ -43,7 +43,7 @@ add_subdirectory(abseil)
 
 find_package(
   Boost
-  1.74.0
+  1.71.0
   REQUIRED
   COMPONENTS context)
 

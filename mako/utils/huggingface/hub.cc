@@ -25,9 +25,9 @@
 
 namespace fs = std::filesystem;
 
-/// \brief Utility to find the user’s home directory, equivalent to Python's ``pathlib.Path.home``.
-/// \return A string view to the home directory.
-static inline absl::string_view home() {
+/// \brief Utility to find the user's home directory, equivalent to Python's ``pathlib.Path.home``.
+/// \return The path to the the user's home directory.
+static inline std::string home() {
   #ifdef _WIN32
   return std::getenv("USERPROFILE");
   #else
@@ -39,9 +39,9 @@ static inline absl::string_view home() {
 /// \param __key The name of environment variable.
 /// \param __default Default value returned if ``__key`` does not exist.
 /// \return Value of the environment variable ``__key``.
-static inline absl::string_view _getenv(absl::string_view __key, absl::string_view __default) {
+static inline std::string _getenv(absl::string_view __key, absl::string_view __default) {
   auto value = std::getenv(__key.data());
-  return value ? value : __default;
+  return value ? value : __default.data();
 }
 
 const auto _default_home                 = fs::path(home()) / fs::path(".cache");

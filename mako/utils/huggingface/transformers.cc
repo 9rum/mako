@@ -18,13 +18,13 @@
 
 #include <algorithm>
 #include <filesystem>
-#include <fstream>
 
 #include <absl/strings/str_format.h>
+#include <boost/bind/bind.hpp>
 
 namespace fs = std::filesystem;
 
-static inline std::tuple<absl::string_view, std::vector<absl::string_view>, bool> prepare_load(
+static inline std::tuple<std::string, std::vector<std::string>, bool> prepare_state_dict(
   absl::string_view model_name_or_path,
   std::optional<absl::string_view> cache_dir,
   absl::string_view load_format,
@@ -52,7 +52,7 @@ static inline std::tuple<absl::string_view, std::vector<absl::string_view>, bool
     allow_patterns.push_back(".pt");
   }
 
-  absl::string_view hf_folder;
+  std::string hf_folder;
   if (!is_local) {
     // Download model weights from Hugging Face Hub.
     // TODO(soomin): implement ``snapshot_download``
@@ -61,8 +61,16 @@ static inline std::tuple<absl::string_view, std::vector<absl::string_view>, bool
     hf_folder = model_name_or_path;
   }
 
-  std::vector<absl::string_view> hf_weights_files;
-  for (const auto &pattern : allow_patterns) {
+  // If a weight file is stored as a string_view, it outlives the actual string value.
+  // To avoid lifetime issue, use string as an exception for weight files.
+  //
+  // NOTE:
+  //
+  // Due to lifetime issues, a string_view is usually a poor choice for a return value
+  // and almost always a poor choice for a data member.
+  // https://abseil.io/docs/cpp/guides/strings
+  std::vector<std::string> hf_weights_files;
+  for (auto pattern : allow_patterns) {
     for (const auto &entry : fs::directory_iterator(hf_folder)) {
       if (entry.path().extension().compare(pattern) == 0) {
         hf_weights_files.push_back(entry.path().string());
@@ -103,17 +111,22 @@ static inline std::tuple<absl::string_view, std::vector<absl::string_view>, bool
     throw std::runtime_error(absl::StrFormat("Cannot find any model weights with %s", model_name_or_path));
   }
 
+  // The iteration order of directory_iterator is unspecified.
+  // To ensure alphabetical iteration order, sort the received entry list.
+  // https://en.cppreference.com/w/cpp/filesystem/directory_iterator
+  std::sort(hf_weights_files.begin(), hf_weights_files.end());
+
   return std::make_tuple(hf_folder, hf_weights_files, use_safetensors);
 }
 
-static inline void load(
-  boost::coroutines2::coroutine<std::tuple<absl::string_view, torch::Tensor>>::push_type &yield,
+static inline void load_state_dict(
+  boost::coroutines2::coroutine<std::pair<std::string, torch::Tensor>>::push_type &yield,
   absl::string_view model_name_or_path,
   std::optional<absl::string_view> cache_dir,
   absl::string_view load_format,
   bool fall_back_to_pt,
   std::optional<absl::string_view> revision) {
-  auto [hf_folder, hf_weights_files, use_safetensors] = prepare_load(
+  auto [hf_folder, hf_weights_files, use_safetensors] = prepare_state_dict(
     model_name_or_path,
     cache_dir,
     load_format,
@@ -122,33 +135,25 @@ static inline void load(
 
   if (load_format.compare("npcache") == 0) {
     throw std::logic_error("npcache is currently not supported");
-  }
-
-  if (use_safetensors) {
+  } else if (use_safetensors) {
     throw std::logic_error("safetensors is currently not supported");
-  }
-
-  for (auto file : hf_weights_files) {
-    auto stream = std::ifstream(file.data(), std::ios::binary);
-    auto buf    = std::vector<char>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
-    stream.close();
-    auto weights = torch::pickle_load(buf).toGenericDict();
-    for (const auto &weight : weights) {
-      yield(std::make_tuple(weight.key().toStringRef(), weight.value().toTensor()));
+  } else {
+    for (const auto &file : hf_weights_files) {
+      // TODO: implement ``torch.load``
     }
   }
 }
 
-boost::coroutines2::coroutine<std::tuple<absl::string_view, torch::Tensor>>::pull_type mako::utils::huggingface::weight_iterator(
+boost::coroutines2::coroutine<std::pair<std::string, torch::Tensor>>::pull_type mako::utils::huggingface::weight_iterator(
   absl::string_view model_name_or_path,
   std::optional<absl::string_view> cache_dir,
   absl::string_view load_format,
   bool fall_back_to_pt,
   std::optional<absl::string_view> revision) {
-  boost::coroutines2::coroutine<std::tuple<absl::string_view, torch::Tensor>>::pull_type iterator{
-    std::bind(
-      load,
-      std::placeholders::_1,
+  boost::coroutines2::coroutine<std::pair<std::string, torch::Tensor>>::pull_type iterator{
+    boost::bind(
+      load_state_dict,
+      boost::placeholders::_1,
       model_name_or_path,
       cache_dir,
       load_format,
