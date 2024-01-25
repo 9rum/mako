@@ -22,6 +22,8 @@
 #include <absl/strings/str_format.h>
 #include <boost/bind/bind.hpp>
 
+#include "mako/utils/torch/serialization.h"
+
 namespace fs = std::filesystem;
 
 static inline std::tuple<std::string, std::vector<std::string>, bool> prepare_state_dict(
@@ -120,7 +122,7 @@ static inline std::tuple<std::string, std::vector<std::string>, bool> prepare_st
 }
 
 static inline void load_state_dict(
-  boost::coroutines2::coroutine<std::pair<std::string, torch::Tensor>>::push_type &yield,
+  boost::coroutines2::coroutine<std::pair<std::string, ::torch::Tensor>>::push_type &yield,
   absl::string_view model_name_or_path,
   std::optional<absl::string_view> cache_dir,
   absl::string_view load_format,
@@ -139,18 +141,21 @@ static inline void load_state_dict(
     throw std::logic_error("safetensors is currently not supported");
   } else {
     for (const auto &file : hf_weights_files) {
-      // TODO: implement ``torch.load``
+      auto state_dict = mako::utils::torch::load(file);
+      for (const auto &state : state_dict) {
+        yield(state);
+      }
     }
   }
 }
 
-boost::coroutines2::coroutine<std::pair<std::string, torch::Tensor>>::pull_type mako::utils::huggingface::weight_iterator(
+boost::coroutines2::coroutine<std::pair<std::string, ::torch::Tensor>>::pull_type mako::utils::huggingface::weight_iterator(
   absl::string_view model_name_or_path,
   std::optional<absl::string_view> cache_dir,
   absl::string_view load_format,
   bool fall_back_to_pt,
   std::optional<absl::string_view> revision) {
-  boost::coroutines2::coroutine<std::pair<std::string, torch::Tensor>>::pull_type iterator{
+  boost::coroutines2::coroutine<std::pair<std::string, ::torch::Tensor>>::pull_type iterator{
     boost::bind(
       load_state_dict,
       boost::placeholders::_1,
