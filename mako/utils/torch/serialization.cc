@@ -18,7 +18,6 @@ absl::flat_hash_map<std::string, ::torch::Tensor> mako::utils::torch::load(
   absl::string_view f,
   std::optional<::torch::Device> map_location,
   bool weights_only,
-  bool mmap
-) {
-// TODO(soomin): implement ``torch.load``
+  bool mmap) {
+  // TODO(soomin): implement ``torch.load``
 }

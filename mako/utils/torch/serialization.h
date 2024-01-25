@@ -37,8 +37,7 @@ absl::flat_hash_map<std::string, ::torch::Tensor> MAKO_API load(
   absl::string_view f,
   std::optional<::torch::Device> map_location = std::nullopt,
   bool weights_only                           = true,
-  bool mmap                                   = false
-);
+  bool mmap                                   = false);
 } // namespace torch
 } // namespace utils
 } // namespace mako
