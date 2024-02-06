@@ -18,13 +18,14 @@
 
 #include <algorithm>
 #include <filesystem>
+#include <fstream>
 
 #include <absl/strings/str_format.h>
 #include <boost/bind/bind.hpp>
 
 namespace fs = std::filesystem;
 
-static inline std::tuple<std::string, std::vector<std::string>, bool> prepare_state_dict(
+static inline std::tuple<std::string, std::vector<std::string>, bool> prepare_load(
   absl::string_view model_name_or_path,
   std::optional<absl::string_view> cache_dir,
   absl::string_view load_format,
@@ -69,14 +70,14 @@ static inline std::tuple<std::string, std::vector<std::string>, bool> prepare_st
   // Due to lifetime issues, a string_view is usually a poor choice for a return value
   // and almost always a poor choice for a data member.
   // https://abseil.io/docs/cpp/guides/strings
-  std::vector<std::string> hf_weights_files;
+  std::vector<std::string> hf_weight_files;
   for (auto pattern : allow_patterns) {
     for (const auto &entry : fs::directory_iterator(hf_folder)) {
       if (entry.path().extension().compare(pattern) == 0) {
-        hf_weights_files.push_back(entry.path().string());
+        hf_weight_files.push_back(entry.path().string());
       }
     }
-    if (!hf_weights_files.empty()) {
+    if (!hf_weight_files.empty()) {
       if (pattern.compare(".safetensors") == 0) {
         use_safetensors = true;
       }
@@ -94,9 +95,9 @@ static inline std::tuple<std::string, std::vector<std::string>, bool> prepare_st
       "scheduler.pt",
       "scaler.pt",
     };
-    hf_weights_files.erase(std::remove_if(
-      hf_weights_files.begin(),
-      hf_weights_files.end(),
+    hf_weight_files.erase(std::remove_if(
+      hf_weight_files.begin(),
+      hf_weight_files.end(),
       [&](absl::string_view entry){
         for (auto suffix: blacklist) {
           if (suffix.size() <= entry.size() && entry.compare(entry.size()-suffix.size(), suffix.size(), suffix) == 0) {
@@ -104,29 +105,24 @@ static inline std::tuple<std::string, std::vector<std::string>, bool> prepare_st
           }
         }
         return false;
-      }), hf_weights_files.end());
+      }), hf_weight_files.end());
   }
 
-  if (hf_weights_files.empty()) {
+  if (hf_weight_files.empty()) {
     throw std::runtime_error(absl::StrFormat("Cannot find any model weights with %s", model_name_or_path));
   }
 
-  // The iteration order of directory_iterator is unspecified.
-  // To ensure alphabetical iteration order, sort the received entry list.
-  // https://en.cppreference.com/w/cpp/filesystem/directory_iterator
-  std::sort(hf_weights_files.begin(), hf_weights_files.end());
-
-  return std::make_tuple(hf_folder, hf_weights_files, use_safetensors);
+  return std::make_tuple(hf_folder, hf_weight_files, use_safetensors);
 }
 
-static inline void load_state_dict(
+static inline void load(
   boost::coroutines2::coroutine<std::pair<std::string, torch::Tensor>>::push_type &yield,
   absl::string_view model_name_or_path,
   std::optional<absl::string_view> cache_dir,
   absl::string_view load_format,
   bool fall_back_to_pt,
   std::optional<absl::string_view> revision) {
-  auto [hf_folder, hf_weights_files, use_safetensors] = prepare_state_dict(
+  auto [hf_folder, hf_weight_files, use_safetensors] = prepare_load(
     model_name_or_path,
     cache_dir,
     load_format,
@@ -138,8 +134,15 @@ static inline void load_state_dict(
   } else if (use_safetensors) {
     throw std::logic_error("safetensors is currently not supported");
   } else {
-    for (const auto &file : hf_weights_files) {
-      // TODO: implement ``torch.load``
+    // TODO(soomin): parallelize below loop using OpenMP
+    for (const auto &file : hf_weight_files) {
+      auto stream = std::ifstream(file, std::ios::binary);
+      auto buf    = std::vector<char>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
+      stream.close();
+      auto weights = torch::pickle_load(buf).toGenericDict();
+      for (const auto &weight : weights) {
+        yield(std::make_pair(weight.key().toStringRef(), weight.value().toTensor()));
+      }
     }
   }
 }
@@ -152,7 +155,7 @@ boost::coroutines2::coroutine<std::pair<std::string, torch::Tensor>>::pull_type 
   std::optional<absl::string_view> revision) {
   boost::coroutines2::coroutine<std::pair<std::string, torch::Tensor>>::pull_type iterator{
     boost::bind(
-      load_state_dict,
+      load,
       boost::placeholders::_1,
       model_name_or_path,
       cache_dir,
