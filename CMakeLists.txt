@@ -47,6 +47,9 @@ find_package(
   REQUIRED
   COMPONENTS context)
 
+find_package(OpenMP REQUIRED)
+string(APPEND CMAKE_CXX_FLAGS " ${OpenMP_CXX_FLAGS}")
+
 include(CTest)
 if(BUILD_TESTING)
   include(GoogleTest)

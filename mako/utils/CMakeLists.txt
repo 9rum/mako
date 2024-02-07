@@ -20,9 +20,11 @@ target_include_directories(
   mako_utils
   PUBLIC
   ${TORCH_INCLUDE_DIRS}
+  ${OpenMP_CXX_INCLUDE_DIRS}
   ${CMAKE_SOURCE_DIR})
 target_link_libraries(
   mako_utils
   ${TORCH_LIBRARIES}
+  ${OpenMP_CXX_LIBRARIES}
   absl::strings)
 add_library(mako::utils ALIAS mako_utils)

@@ -22,6 +22,7 @@
 
 #include <absl/strings/str_format.h>
 #include <boost/bind/bind.hpp>
+#include <omp.h>
 
 namespace fs = std::filesystem;
 
@@ -134,13 +135,25 @@ static inline void load(
   } else if (use_safetensors) {
     throw std::logic_error("safetensors is currently not supported");
   } else {
-    // TODO(soomin): parallelize below loop using OpenMP
+    std::vector<c10::impl::GenericDict> dicts;
+    dicts.reserve(hf_weight_files.size());
+
+    // Support for range-based for loops is available since OpenMP 5.0 (pp. 99).
+    // https://www.openmp.org/wp-content/uploads/OpenMP-API-Specification-5.0.pdf
+    #pragma omp parallel for
     for (const auto &file : hf_weight_files) {
       auto stream = std::ifstream(file, std::ios::binary);
       auto buf    = std::vector<char>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
       stream.close();
-      auto weights = torch::pickle_load(buf).toGenericDict();
-      for (const auto &weight : weights) {
+      // TODO(soomin): add caution and explanations about deserialization failure until LibTorch 2.1.2.
+      auto dict = torch::pickle_load(buf).toGenericDict();
+
+      #pragma omp critical
+      dicts.push_back(dict);
+    }
+
+    for (const auto &dict : dicts) {
+      for (const auto &weight : dict) {
         yield(std::make_pair(weight.key().toStringRef(), weight.value().toTensor()));
       }
     }
