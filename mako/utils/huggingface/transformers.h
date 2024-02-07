@@ -25,7 +25,7 @@
 
 namespace mako {
 namespace utils {
-namespace huggingface {
+inline namespace huggingface {
 /// \brief Utility to download and initialize Hugging Face Transformers model.
 /// \param model_name_or_path A path to a directory containing model weights saved using ``save_pretrained``.
 /// \param cache_dir Path to the folder where cached files are stored.
