@@ -22,7 +22,6 @@
 
 #include <absl/strings/str_format.h>
 #include <boost/bind/bind.hpp>
-#include <omp.h>
 
 namespace fs = std::filesystem;
 
@@ -41,7 +40,7 @@ static inline std::tuple<std::string, std::vector<std::string>, bool> prepare_lo
     allow_patterns = {".safetensors", ".bin"};
   } else if (load_format.compare("safetensors") == 0) {
     use_safetensors = true;
-    allow_patterns  = {".safetensors", ".bin"};
+    allow_patterns  = {".safetensors"};
   } else if (load_format.compare("pt") == 0) {
     allow_patterns = {".pt"};
   } else if (load_format.compare("npcache") == 0) {
@@ -57,7 +56,7 @@ static inline std::tuple<std::string, std::vector<std::string>, bool> prepare_lo
   std::string hf_folder;
   if (!is_local) {
     // Download model weights from Hugging Face Hub.
-    // TODO(soomin): implement ``snapshot_download``
+    // TODO: implement ``snapshot_download``
     throw std::logic_error("snapshot download is currently not supported");
   } else {
     hf_folder = model_name_or_path;
@@ -131,29 +130,20 @@ static inline void load(
     revision);
 
   if (load_format.compare("npcache") == 0) {
+    // TODO: implement faster loading with numpy and json
     throw std::logic_error("npcache is currently not supported");
   } else if (use_safetensors) {
+    // TODO: implement ``safe_open``
     throw std::logic_error("safetensors is currently not supported");
   } else {
-    std::vector<c10::impl::GenericDict> dicts;
-    dicts.reserve(hf_weight_files.size());
-
-    // Support for range-based for loops is available since OpenMP 5.0 (pp. 99).
-    // https://www.openmp.org/wp-content/uploads/OpenMP-API-Specification-5.0.pdf
-    #pragma omp parallel for
     for (const auto &file : hf_weight_files) {
       auto stream = std::ifstream(file, std::ios::binary);
       auto buf    = std::vector<char>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
       stream.close();
-      // TODO(soomin): add caution and explanations about deserialization failure until LibTorch 2.1.2.
-      auto dict = torch::pickle_load(buf).toGenericDict();
 
-      #pragma omp critical
-      dicts.push_back(dict);
-    }
-
-    for (const auto &dict : dicts) {
-      for (const auto &weight : dict) {
+      // TODO: add caution and explanations about deserialization failure until LibTorch 2.1.2
+      auto weights = torch::pickle_load(buf).toGenericDict();
+      for (const auto &weight : weights) {
         yield(std::make_pair(weight.key().toStringRef(), weight.value().toTensor()));
       }
     }
