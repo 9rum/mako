@@ -348,7 +348,6 @@ TEST(TransformersTest, test) {
     vllm_output["model.layers.11.self_attn.rotary_emb.inv_freq"] = {64}
     vllm_output["model.layers.11.mlp.gate_proj.weight"] = {11008, 4096}
 
-    // Iterator
     auto iterator = mako::utils::huggingface::weight_iterator("/DATA/base_models/Llama-2-7b-hf");
     for (i = vllm_output.start(); i = vllm_output.end(); i++) {
         std::pair(std::string, torch::Tensor) value = iterator();
@@ -357,7 +356,7 @@ TEST(TransformersTest, test) {
         ASSERT_NE(it, vllm_output.end()) << "INVALID WEIGHT NAME LOADED";
 
         // check tensor's shape is equal
-        ASSERT_EQ(vllm_output[value.first], value.second.shape()) << "INVALID WEIGHT SHAPE LOADED";
+        ASSERT_EQ(vllm_output[value.first], value.second.sizes()) << "INVALID WEIGHT SHAPE LOADED";
 
         // check all weight's are loaded
         vllm_output.erase(value.first);
