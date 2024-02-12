@@ -14,7 +14,6 @@
 
 #include "mako/utils/huggingface/transformers.h"
 
-#include <vector>
 #include <map>
 #include <array>
 
@@ -23,7 +22,7 @@
 
 TEST(TransformersTest, test) {
     //Load vLLM's weight iterator output
-    std::map<std::string, std::vector<int>> vllm_output;
+    std::map<std::string, std::array<int>> vllm_output;
     vllm_output["model.layers.11.mlp.up_proj.weight"] = {11008, 4096}
     vllm_output["model.layers.11.mlp.down_proj.weight"] = {4096, 11008}
     vllm_output["model.layers.11.input_layernorm.weight"] = {4096}
