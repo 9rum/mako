@@ -47,6 +47,8 @@ find_package(
   REQUIRED
   COMPONENTS context)
 
+add_subdirectory(json)
+
 include(CTest)
 if(BUILD_TESTING)
   include(GoogleTest)
