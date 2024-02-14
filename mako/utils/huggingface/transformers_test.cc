@@ -355,7 +355,7 @@ TEST(WeightIteratorTest, Llama2) {
     // CMake Error at /usr/share/cmake-3.28/Modules/GoogleTestAddTests.cmake:112 (message):
     // Error running test executable.
     //
-    // Path: '/home/soomin/pytorch_playground/004/build/example'
+    // Path: '/mako/build/utils/transformers_test'
     // Result: Segmentation fault
     // Output:
     //
