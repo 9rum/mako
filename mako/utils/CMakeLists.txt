@@ -26,3 +26,11 @@ target_link_libraries(
   ${TORCH_LIBRARIES}
   absl::strings)
 add_library(mako::utils ALIAS mako_utils)
+
+add_executable(
+  huggingface_test
+  huggingface/transformers_test.cc)
+target_link_libraries(
+  huggingface_test
+  GTest::gtest_main)
+gtest_discover_tests(huggingface_test)
