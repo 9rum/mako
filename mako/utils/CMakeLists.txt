@@ -16,11 +16,6 @@ add_library(
   mako_utils
   huggingface/hub.cc
   huggingface/transformers.cc)
-target_include_directories(
-  mako_utils
-  PUBLIC
-  ${TORCH_INCLUDE_DIRS}
-  ${CMAKE_SOURCE_DIR})
 target_link_libraries(
   mako_utils
   ${TORCH_LIBRARIES}

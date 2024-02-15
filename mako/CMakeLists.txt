@@ -12,15 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+include_directories(
+  ${TORCH_INCLUDE_DIRS}
+  ${CMAKE_SOURCE_DIR})
+
 add_subdirectory(nn)
 add_subdirectory(utils)
 
 add_executable(${CMAKE_PROJECT_NAME} main.cc)
-target_include_directories(
-  ${CMAKE_PROJECT_NAME}
-  PUBLIC
-  ${TORCH_INCLUDE_DIRS}
-  ${CMAKE_SOURCE_DIR})
 target_link_libraries(
   ${CMAKE_PROJECT_NAME}
   ${TORCH_LIBRARIES}
