@@ -18,7 +18,15 @@
 #include <gtest/gtest.h>
 
 TEST(WeightIteratorTest, Llama2) {
-  std::map<std::string, std::vector<int64_t>> testcases = {
+  // Test case for Llama 2 7B
+  //
+  // NOTE:
+  //
+  // * Comparing all weight values take too long, so we test only the name and
+  // shape of the loaded weights.
+  // * The return type of LibTorch's tensor shape API is IntArrayRef, but here
+  // we use vector due to lifetime issues.
+  std::map<std::string, std::vector<int64_t>> shapes = {
     {"model.layers.11.mlp.up_proj.weight", {11008, 4096}},
     {"model.layers.11.mlp.down_proj.weight", {4096, 11008}},
     {"model.layers.11.input_layernorm.weight", {4096}},
@@ -344,6 +352,13 @@ TEST(WeightIteratorTest, Llama2) {
     {"model.layers.11.mlp.gate_proj.weight", {11008, 4096}},
   };
 
+  // NOTE: Why not run the weight iterator directly?
+  //
+  // There are two major problems with running the weight iterator in tests:
+  // * All users must hold the checkpoints.
+  // * Each test requires tens of minutes for weight loading.
+  // So we save the output of weight iterator beforehand and compare it to that
+  // of vLLM's weight iterator on testing.
   std::map<std::string, std::vector<int64_t>> weights = {
     {"model.embed_tokens.weight", {32000, 4096}},
     {"model.layers.0.self_attn.q_proj.weight", {4096, 4096}},
@@ -671,12 +686,12 @@ TEST(WeightIteratorTest, Llama2) {
   };
 
   for (const auto [name, weight] : weights) {
-    auto shape = testcases.find(name);
-    EXPECT_NE(shape, testcases.end());
+    auto shape = shapes.find(name);
+    EXPECT_NE(shape, shapes.end());
     EXPECT_EQ(shape->second, weight);
-    testcases.erase(name);
+    shapes.erase(name);
   }
-  EXPECT_TRUE(testcases.empty());
+  EXPECT_TRUE(shapes.empty());
 }
 
 int main(int argc, char **argv) {

@@ -6,5 +6,8 @@
 all:
 	@mkdir -p build && cd build && cmake .. && $(MAKE)
 
+test:
+	@cd build && ctest .
+
 clean:
 	@rm -r build
