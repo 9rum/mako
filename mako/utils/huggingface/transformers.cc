@@ -17,13 +17,17 @@
 #include "mako/utils/huggingface/transformers.h"
 
 #include <algorithm>
+#include <cassert>
 #include <filesystem>
 #include <fstream>
 
 #include <absl/strings/str_format.h>
 #include <boost/bind/bind.hpp>
+#include <nlohmann/json.hpp>
 
 namespace fs = std::filesystem;
+
+using nlohmann::json;
 
 static inline std::tuple<std::string, std::vector<std::string>, bool> prepare_load(
   absl::string_view model_name_or_path,
@@ -130,8 +134,38 @@ static inline void load(
     revision);
 
   if (load_format.compare("npcache") == 0) {
-    // TODO: implement faster loading with numpy and json
-    throw std::logic_error("npcache is currently not supported");
+    // Currently npcache only supports .bin checkpoints.
+    assert(!use_safetensors);
+
+    // Convert the model weights from torch tensors to numpy arrays for faster loading.
+    auto np_folder = fs::path(hf_folder) / fs::path("np");
+    fs::create_directories(np_folder);
+
+    auto weight_names_file = np_folder / fs::path("weight_names.json");
+    // Use file lock to prevent multiple processes from dumping the same model weights to numpy at the same time.
+    // TODO: use file lock
+    if (!fs::exists(weight_names_file)) {
+      std::vector<std::string> weight_names;
+      for (const auto &file : hf_weight_files) {
+        auto stream = std::ifstream(file, std::ios::binary);
+        auto buf    = std::vector<char>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
+        stream.close();
+        auto weights = torch::pickle_load(buf).toGenericDict();
+        for (const auto &weight : weights) {
+          auto name       = weight.key().toStringRef();
+          auto param_path = np_folder / fs::path(name);
+          // TODO: np.save(param_path, param.cpu().detach().numpy())
+          weight_names.push_back(name);
+        }
+      }
+      std::ofstream(weight_names_file) << json(weight_names);
+    }
+
+    auto weight_names = json::parse(std::ifstream(weight_names_file)).get<std::vector<std::string>>();
+    for (const auto &name : weight_names) {
+      auto param_path = np_folder / fs::path(name);
+      // TODO: yield torch.from_numpy(np.load(param_path))
+    }
   } else if (use_safetensors) {
     // TODO: implement ``safe_open``
     throw std::logic_error("safetensors is currently not supported");
