@@ -19,7 +19,8 @@ add_library(
 target_link_libraries(
   mako_utils
   ${TORCH_LIBRARIES}
-  absl::strings)
+  absl::strings
+  nlohmann_json::nlohmann_json)
 add_library(mako::utils ALIAS mako_utils)
 
 add_executable(
