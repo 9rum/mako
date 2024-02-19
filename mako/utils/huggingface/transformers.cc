@@ -175,7 +175,26 @@ static inline void load(
       auto buf    = std::vector<char>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
       stream.close();
 
-      // TODO: add caution and explanations about deserialization failure until LibTorch 2.1.2
+      // CAUTION:
+      //
+      // Libtorch version 2.1.2 and few other previous versions may result in errors in torch::load_pickle().
+      // Few versions of Libtorch lacks support for the recent header information associated with Pickle's protocols.
+      //
+      // We suggest you to use Libtorch 2.2.0, but if you want to use other versions(2.1.2 and etc.),
+      // transform your pickle file(.bin) into hexadecimal form and
+      // check the ZIP file headaer part ends with '80 02 7d 71 00 28 58 19 00 00 00'.
+      //
+      // Examples:
+      // A file with the following binary header is acceptable in version 2.1.2:    But this file will cause an error:
+      // 000000: 50 4b 03 04 00 00 08 08 00 00 00 00 00 00 00 00  PK..............  000000: 50 4b 03 04 00 00 08 08 00 00 00 00 00 00 00 00  PK..............
+      // 000010: 00 00 00 00 00 00 00 00 00 00 25 00 3d 00 70 79  ..........%.=.py  000010: 00 00 00 00 00 00 00 00 00 00 25 00 3d 00 70 79  ..........%.=.py
+      // 000020: 74 6f 72 63 68 5f 6d 6f 64 65 6c 2d 30 30 30 30  torch_model-0000  000020: 74 6f 72 63 68 5f 6d 6f 64 65 6c 2d 30 30 30 30  torch_model-0000
+      // 000030: 31 2d 6f 66 2d 30 30 30 30 33 2f 64 61 74 61 2e  1-of-00003/data.  000030: 32 2d 6f 66 2d 30 30 30 30 33 2f 64 61 74 61 2e  2-of-00003/data.
+      // 000040: 70 6b 6c 46 42 39 00 5a 5a 5a 5a 5a 5a 5a 5a 5a  pklFB9.ZZZZZZZZZ  000040: 70 6b 6c 46 42 39 00 5a 5a 5a 5a 5a 5a 5a 5a 5a  pklFB9.ZZZZZZZZZ
+      // 000050: 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a  ZZZZZZZZZZZZZZZZ  000050: 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a  ZZZZZZZZZZZZZZZZ
+      // 000060: 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a  ZZZZZZZZZZZZZZZZ  000060: 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a  ZZZZZZZZZZZZZZZZ
+      // 000070: 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a  ZZZZZZZZZZZZZZZZ  000070: 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a  ZZZZZZZZZZZZZZZZ
+      // 000080: 80 02 7d 71 00 28 58 19 00 00 00                 ..}q.(X....       000080: 80 02 7d 71 00 28 58 22 00 00 00                 ..}q.(X"...
       auto weights = torch::pickle_load(buf).toGenericDict();
       for (const auto &weight : weights) {
         yield(std::make_pair(weight.key().toStringRef(), weight.value().toTensor()));
