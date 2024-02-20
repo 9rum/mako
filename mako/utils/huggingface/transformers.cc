@@ -177,15 +177,14 @@ static inline void load(
 
       // CAUTION:
       //
-      // Libtorch version 2.1.2 and few other previous versions may result in errors in torch::load_pickle().
-      // Few versions of Libtorch lacks support for the recent header information associated with Pickle's protocols.
+      // Several previous versions of LibTorch including v2.1.2 may result in deserialization failure upon
+      // ``torch::pickle_load`` due to the lacked support for pickling protocol.
       //
-      // We suggest you to use Libtorch 2.2.0, but if you want to use other versions(2.1.2 and etc.),
-      // transform your pickle file(.bin) into hexadecimal form and
-      // check the ZIP file headaer part ends with '80 02 7d 71 00 28 58 19 00 00 00'.
+      // To avoid such pickling issues, we recommend using LibTorch v2.2.0 but if you have to use other versions
+      // including v2.1.2, make sure the pickle header ends with 80 02 7d 71 00 28 58 19 00 00 00 by converting it into
+      // hexadecimal form; e.g., the below left header is deserializable in LibTorch v2.1.2, but the right one fails to
+      // be deserialized:
       //
-      // Examples:
-      // A file with the following binary header is acceptable in version 2.1.2:    But this file will cause an error:
       // 000000: 50 4b 03 04 00 00 08 08 00 00 00 00 00 00 00 00  PK..............  000000: 50 4b 03 04 00 00 08 08 00 00 00 00 00 00 00 00  PK..............
       // 000010: 00 00 00 00 00 00 00 00 00 00 25 00 3d 00 70 79  ..........%.=.py  000010: 00 00 00 00 00 00 00 00 00 00 25 00 3d 00 70 79  ..........%.=.py
       // 000020: 74 6f 72 63 68 5f 6d 6f 64 65 6c 2d 30 30 30 30  torch_model-0000  000020: 74 6f 72 63 68 5f 6d 6f 64 65 6c 2d 30 30 30 30  torch_model-0000
